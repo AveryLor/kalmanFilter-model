@@ -1,0 +1,30 @@
+Kalman Filter SOC Estimation Match Report
+==========================================
+
+Dataset: mich_endurance_combined_data.csv
+Number of samples: 158564
+Duration: 1585.63 s
+Sample time: 0.0100 s
+
+Kalman Filter Parameters:
+  Q (process noise): 1.000000e-06
+  R (measurement noise): 7.000000e+01
+  P0 (initial covariance): [see .mat file]
+  Initial SOC estimate: 0.8000
+
+Match Mode: true
+Relies on Voltage: true
+
+Results:
+  RMSE (SOC units): 0.103171
+  RMSE (%): 10.3171
+  Max Error: 0.182611
+  Mean Error: 0.027798
+  Target Tolerance: 0.005000
+  Match Result: FAIL
+
+Battery Parameters:
+  Cell Capacity: 27.00 Ah
+  Internal Resistance: 0.0110 Ω
+  Cells in Series: 144
+  Parallel Strings: 1
