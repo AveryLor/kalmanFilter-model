@@ -75,14 +75,6 @@ fprintf('  I_cell(1): %.3f A\n', I_cell(1));
 fprintf('  OCV_initial: %.3f V\n', OCV_initial);
 fprintf('  Initial SOC: %.3f (%.1f%%)\n', SOC0, SOC0*100);
 
-% Warn if cell voltage seems wrong
-if V_cell(1) > 10
-    fprintf('\n⚠️  WARNING: Cell voltage (%.3f V) seems too high!\n', V_cell(1));
-    fprintf('  This suggests Ns=%d might be incorrect for this data.\n', Ns);
-    fprintf('  Michigan data may be for a larger pack.\n');
-    fprintf('  EKF will still run, but results may be inaccurate.\n');
-end
-
 %% EKF Parameters
 Q = 1e-5;        % Process noise covariance (SOC uncertainty)
 R = 0.01;        % Measurement noise covariance (voltage uncertainty)
