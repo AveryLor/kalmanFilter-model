@@ -37,7 +37,7 @@ V_cell = V_pack / Ns;
 I_cell = I_pack / Np;
 
 %% SOC-OCV Lookup Table
-% From BatterySOCEstimationData.m
+% I got this LUT from a online MATLAB model 
 SOC_vec = [0, 0.1, 0.25, 0.5, 0.75, 0.9, 1.0];  % SOC (fraction)
 OCV_vec = [3.49, 3.55, 3.62, 3.71, 3.91, 4.07, 4.19];  % OCV (V)
 
@@ -97,7 +97,7 @@ for k = 2:N
     % Process model: SOC(k+1) = SOC(k) - (I*dt) / Q_C
     % This is the state transition function f(x, u)
     % Note: Positive current = discharging (decreases SOC)
-    %       Negative current = charging (increases SOC)
+    %       Negative current = charging (increases SOC) (could be from actual charging or regen)
     
     % Predict SOC using current integration
     % Use average current over interval for better accuracy
@@ -107,7 +107,7 @@ for k = 2:N
         I_avg = I_cell(k);
     end
     
-    % SOC change: discharge (positive I) decreases SOC, charge (negative I) increases SOC
+    % SOC chang
     delta_SOC = -(I_avg * dt_k) / Q_C;
     x_pred = x + delta_SOC;
     x_pred = max(0, min(1, x_pred));  % Clamp to valid range
