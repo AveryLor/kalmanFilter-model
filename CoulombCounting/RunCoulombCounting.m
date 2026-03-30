@@ -1,9 +1,6 @@
-% =========================================================================
 % Helper Script to Run CoulombCounting.m
 % This script sets up the required inputs and then runs CoulombCounting.m
-% =========================================================================
 
-%% Option 1: Use Michigan Race Data (convert to power profile)
 % Load Michigan race data
 fprintf('Loading Michigan race data...\n');
 data = readtable('mich_endurance_combined_data.csv');
