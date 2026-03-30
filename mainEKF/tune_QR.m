@@ -1,41 +1,9 @@
-% =========================================================================
-% TUNE Q AND R PARAMETERS FOR KALMAN FILTER
-% =========================================================================
-%
-% Automatically tunes Q and R parameters to match reference SOC
-%
-% [Q_best, R_best, SOC_kalman, P_kalman] = tune_QR(...
-%     time, I_cell, V_cell, SOC_ref, OCVf, ...
-%     Q0, R0, P0, x0, Q_C, R_ohm, Ts, relyOnVoltage, rmseTolerance)
-%
-% =========================================================================
+% Tune Q and R pamaters 
 
 function [Q_best, R_best, SOC_kalman, P_kalman] = tune_QR(...
     time, I_cell, V_cell, SOC_ref, OCVf, ...
     Q0, R0, P0, x0, Q_C, R_ohm, Ts, relyOnVoltage, rmseTolerance)
-    % Automatically tune Q and R to match reference SOC
-    %
-    % Inputs:
-    %   time          - Time vector
-    %   I_cell        - Cell current vector
-    %   V_cell        - Cell voltage vector
-    %   SOC_ref       - Reference SOC (from Coulomb counting)
-    %   OCVf          - OCV function handle
-    %   Q0            - Initial Q guess
-    %   R0            - Initial R guess
-    %   P0            - Initial covariance
-    %   x0            - Initial state
-    %   Q_C           - Cell capacity in Coulombs
-    %   R_ohm         - Internal resistance
-    %   Ts            - Sample time
-    %   relyOnVoltage - Whether to use voltage measurements
-    %   rmseTolerance - Target RMSE tolerance
-    %
-    % Outputs:
-    %   Q_best        - Best Q parameter
-    %   R_best        - Best R parameter
-    %   SOC_kalman    - SOC estimate with best parameters
-    %   P_kalman      - Covariance history with best parameters
+ 
     
     fprintf('Starting Q/R tuning optimization...\n');
     
