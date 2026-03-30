@@ -1,18 +1,7 @@
-% =========================================================================
 % Kalman Filter Utility Functions
-% =========================================================================
-%
-% Helper functions for Kalman filter SOC estimation:
-%   - kf_predict: Kalman filter prediction step
-%   - kf_update: Kalman filter update step
-%   - compute_rmse: Compute RMSE between two SOC traces
-%   - tune_QR: Automatic tuning of Q and R to match Coulomb counting
-%
-% =========================================================================
 
-%% ========================================================================
-% KALMAN FILTER PREDICTION STEP
-% ========================================================================
+
+% Kalman Filter Prediction Step 
 function [x_pred, P_pred] = kf_predict(x_k, P_k, I_cell, Ts, Q_C, Q)
     % Predict state and covariance
     %
