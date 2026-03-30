@@ -1,20 +1,7 @@
-% =========================================================================
 % Simple Extended Kalman Filter (EKF) for Battery Pack SOC Estimation
-% =========================================================================
-%
-% This script implements an EKF to estimate State of Charge (SOC)
-% for a battery pack using voltage and current measurements.
-%
-% Battery parameters from CoulombCounting.m (lines 13-20):
-%   Ns = 4 cells in series
-%   Np = 8 parallel strings
-%   Q_Ah = 3.45 Ah (cell capacity)
-%   R_ohm = 0.038 Ω (internal resistance)
-%
-% =========================================================================
+
 
 % Try to load Michigan race data
-
 data = readtable('mich_endurance_combined_data.csv');
 time = table2array(data(:,1));      % Time (s)
 V_pack = table2array(data(:,2));    % Pack Voltage (V)
