@@ -1,9 +1,6 @@
-% =========================================================================
-% Coulomb Counting SOC Estimation from Michigan Race Data
-%           (SOC–OCV LUT given as M×2 matrix)
-% =========================================================================
+% Coulomb Counting SOC Estimation from Michigan Race Data (SOC–OCV LUT given as M×2 matrix)
 
-%% ----- USER-SET PARAMETERS ---------------------------------------------
+% User parameters
 Ns        = 4;          % cells in series
 Np        = 8;          % parallel strings
 Q_Ah      = 3.45;       % cell capacity (Ah)
@@ -13,7 +10,7 @@ Vmin_cell = 2.5;        % minimum allowed cell voltage (V)
 % Name of your SOC–OCV variable (change if different)
 socOcvVar = 'soc_ocv_lut';   % << put your variable name here
 
-%% ----- LOAD MICHIGAN DATA ----------------------------------------------
+%% Load Mich Data 
 if exist('mich_endurance_combined_data.csv','file')
     data = readtable('mich_endurance_combined_data.csv');
     time   = table2array(data(:,1));  % Time (s)
@@ -28,7 +25,7 @@ else
     error('Michigan race data not found. Place CSV in the working folder.');
 end
 
-%% ----- LOAD SOC–OCV LUT ------------------------------------------------
+%% Load SOC–OCV LUT 
 if ~exist(socOcvVar,'var')
     error('SOC–OCV LUT variable "%s" not found.', socOcvVar);
 end
@@ -39,7 +36,7 @@ OCV_LUT = soc_ocv_lut(:,2);
 
 OCVf = @(soc) interp1(SOC_LUT, OCV_LUT, soc, 'linear', 'extrap');
 
-%% ----- PRE-ALLOC & INITIAL CONDITIONS -----------------------------------
+%% Pre-alloc and initial conditions
 N      = numel(time);
 dt_vec = [0; diff(time)];
 Q_C    = Q_Ah*3600;   % Coulombs per cell
@@ -56,7 +53,7 @@ SOC(1) = SOC0;
 
 fprintf('Initial SOC estimated from OCV: %.1f%%\n', SOC0*100);
 
-%% ----- MAIN LOOP --------------------------------------------------------
+%% Main loop
 for k = 2:N
     % Coulomb counting update
     I_avg = (I_cell(k-1) + I_cell(k))/2;
@@ -65,10 +62,10 @@ for k = 2:N
     SOC(k) = max(0, min(1, SOC(k)));  % clamp 0-1
 end
 
-%% ----- COMPUTE OCV FROM MEASURED VOLTAGE --------------------------------
+%% Compute OCV from measured voltage 
 OCV_measured = V_cell + I_cell * R_ohm;
 
-%% ----- PLOTS ------------------------------------------------------------
+%% Plots
 figure('Position',[100,100,1200,600]);
 
 % 1) SOC vs Time
@@ -88,6 +85,6 @@ xlabel('SOC [%]'); ylabel('OCV [V]');
 title('Coulomb Counting SOC vs OCV');
 grid on;
 
-%% ----- EXPORT -----------------------------------------------------------
+%% Export
 SOC_vs_time = [time,SOC];
 assignin('base','SOC_vs_time',SOC_vs_time);
