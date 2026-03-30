@@ -3,19 +3,6 @@
 
 % Kalman Filter Prediction Step 
 function [x_pred, P_pred] = kf_predict(x_k, P_k, I_cell, Ts, Q_C, Q)
-    % Predict state and covariance
-    %
-    % Inputs:
-    %   x_k    - Current state estimate [SOC; V_polarization (optional)]
-    %   P_k    - Current covariance matrix
-    %   I_cell - Cell current (A)
-    %   Ts     - Sample time (s)
-    %   Q_C    - Cell capacity in Coulombs (Ah * 3600)
-    %   Q      - Process noise covariance matrix
-    %
-    % Outputs:
-    %   x_pred - Predicted state
-    %   P_pred - Predicted covariance
     
     n_states = length(x_k);
     
@@ -37,26 +24,10 @@ function [x_pred, P_pred] = kf_predict(x_k, P_k, I_cell, Ts, Q_C, Q)
     P_pred = F * P_k * F' + Q;
 end
 
-%% ========================================================================
-% KALMAN FILTER UPDATE STEP
-% ========================================================================
+% Kalman filter update step
 function [x_upd, P_upd] = kf_update(x_pred, P_pred, z_k, I_cell, ...
     OCVf, R_ohm, R)
-    % Update state and covariance using measurement
-    %
-    % Inputs:
-    %   x_pred - Predicted state
-    %   P_pred - Predicted covariance
-    %   z_k    - Measurement (terminal voltage)
-    %   I_cell - Cell current (A)
-    %   OCVf   - Function handle for OCV(SOC)
-    %   R_ohm  - Internal resistance (Ω)
-    %   R      - Measurement noise covariance
-    %
-    % Outputs:
-    %   x_upd  - Updated state
-    %   P_upd  - Updated covariance
-    
+
     n_states = length(x_pred);
     
     % Measurement model: V_terminal = OCV(SOC) - I*R
@@ -94,18 +65,8 @@ function [x_upd, P_upd] = kf_update(x_pred, P_pred, z_k, I_cell, ...
     P_upd = I_KH * P_pred * I_KH' + K_k * R * K_k';
 end
 
-%% ========================================================================
-% COMPUTE RMSE
-% ========================================================================
+% Compute RMSE 
 function rmse = compute_rmse(SOC_est, SOC_ref)
-    % Compute Root Mean Square Error between estimated and reference SOC
-    %
-    % Inputs:
-    %   SOC_est - Estimated SOC vector
-    %   SOC_ref - Reference SOC vector
-    %
-    % Output:
-    %   rmse    - RMSE in SOC units
     
     if length(SOC_est) ~= length(SOC_ref)
         error('SOC vectors must have same length');
@@ -114,36 +75,11 @@ function rmse = compute_rmse(SOC_est, SOC_ref)
     rmse = sqrt(mean((SOC_est - SOC_ref).^2));
 end
 
-%% ========================================================================
-% TUNE Q AND R PARAMETERS
-% ========================================================================
+% Tune Q and R parameters 
 function [Q_best, R_best, SOC_kalman, P_kalman] = tune_QR(...
     time, I_cell, V_cell, SOC_ref, OCVf, ...
     Q0, R0, P0, x0, Q_C, R_ohm, Ts, relyOnVoltage, rmseTolerance)
-    % Automatically tune Q and R to match reference SOC
-    %
-    % Inputs:
-    %   time          - Time vector
-    %   I_cell        - Cell current vector
-    %   V_cell        - Cell voltage vector
-    %   SOC_ref       - Reference SOC (from Coulomb counting)
-    %   OCVf          - OCV function handle
-    %   Q0            - Initial Q guess
-    %   R0            - Initial R guess
-    %   P0            - Initial covariance
-    %   x0            - Initial state
-    %   Q_C           - Cell capacity in Coulombs
-    %   R_ohm         - Internal resistance
-    %   Ts            - Sample time
-    %   relyOnVoltage - Whether to use voltage measurements
-    %   rmseTolerance - Target RMSE tolerance
-    %
-    % Outputs:
-    %   Q_best        - Best Q parameter
-    %   R_best        - Best R parameter
-    %   SOC_kalman    - SOC estimate with best parameters
-    %   P_kalman      - Covariance history with best parameters
-    
+
     fprintf('Starting Q/R tuning optimization...\n');
     
     % Grid search strategy
@@ -232,9 +168,6 @@ function [Q_best, R_best, SOC_kalman, P_kalman] = tune_QR(...
     fprintf('  Best RMSE = %.6f\n', best_rmse);
 end
 
-%% ========================================================================
-% HELPER: RUN KF WITH PARAMETERS
-% ========================================================================
 function [SOC_out, P_out] = run_kf_with_params(...
     time, I_cell, V_cell, OCVf, Q, R, P0, x0, Q_C, R_ohm, Ts, relyOnVoltage)
     % Run Kalman filter with given parameters
