@@ -1,16 +1,7 @@
-% =========================================================================
-% Simulate LVBatt Voltage from Power Profile using Rint Model
-%           (SOC–OCV LUT given as M×2 matrix)
-% =========================================================================
-%
-% REQUIRED INPUTS in workspace:
-%   power_vs_time  : [t  , P_lvbatt]  (W)
-%   soc_ocv_lut    : [SOC(%) , OCV(V)]  (non-uniform spacing OK)
-%
-% USER PARAMETERS to edit below.
-% =========================================================================
+% Simulate LVBatt Voltage from Power Profile using Rint Model (SOC–OCV LUT given as M×2 matrix)
 
-%% ----- USER-SET PARAMETERS ---------------------------------------------
+
+% USER-SET PARAMETERS 
 Ns        = 4;          % cells in series
 Np        = 8;           % parallel strings
 Q_Ah      = 3.45;         % cell capacity (Ah)
@@ -22,7 +13,7 @@ Vmin_lvbatt = Vmin_cell * Ns;
 % Name of your SOC–OCV variable (change if different)
 socOcvVar = 'soc_ocv_lut';   % << put your variable name here
 
-%% ----- FETCH INPUT MATRICES --------------------------------------------
+%% FETCH INPUT MATRICES
 if ~exist('power_vs_time','var')
     error('Variable power_vs_time not found in workspace.');
 end
@@ -56,7 +47,7 @@ V_lvbatt(1) = Ns * V0_cell;
 [~, idx0] = min(abs(OCV_LUT - V0_cell));   % nearest OCV point
 SOC(1)    = SOC_LUT(idx0);                 % initial SOC (fraction)
 
-%% ----- MAIN LOOP --------------------------------------------------------
+%% Main Loop
 for k = 2:N
     I_lvbatt(k) = P_lvbatt(k-1) / V_lvbatt(k-1);
     I_cell(k)   = I_lvbatt(k) / Np;
@@ -69,7 +60,7 @@ for k = 2:N
     V_lvbatt(k) = Ns * V_cell(k);
 end
 
-%% ----- PLOTS ------------------------------------------------------------
+% Plots
 figure;
 subplot(3,1,1); plot(time,P_lvbatt,'LineWidth',1.8); grid on
 ylabel('Power (W)')
@@ -93,27 +84,27 @@ xlabel('Time (s)');
 grid on;
 
 
-%% ----- SUMMARY INFO DISPLAY --------------------------------------------
+%% Info Display
 
-% 1. Initial SOC estimate
+% Initial SOC estimate
 [~, idx0] = min(abs(OCV_LUT - V0_cell));
 initialSOC_pct = SOC_LUT(idx0) * 100;
 
-% 2. Lowest voltage and time
+% Lowest voltage and time
 [minV, minIdx] = min(V_lvbatt);
 minV_time = time(minIdx);
 minV_cell = minV / Ns;
 
-% 3. Display results
+% Display results
 fprintf('\n========== LVBATT VOLTAGE SIMULATION SUMMARY ==========\n');
 fprintf('Initial cell voltage       : %.3f V\n', V0_cell);
-fprintf('→ Estimated initial SOC     : %.1f %%\n', initialSOC_pct);
+fprintf('Estimated initial SOC     : %.1f %%\n', initialSOC_pct);
 fprintf('Minimum simulated voltage  : %.2f V\n', minV);
-fprintf('→ Corresponding cell voltage : %.3f V\n', minV_cell);
-fprintf('→ Occurs at time            : %.2f s\n', minV_time);
+fprintf('Corresponding cell voltage : %.3f V\n', minV_cell);
+fprintf('Occurs at time            : %.2f s\n', minV_time);
 fprintf('========================================================\n\n');
 
-%% ----- EXPORT -----------------------------------------------------------
+% EXPORT
 lvbatt_voltage_vs_time = [time , V_lvbatt];
 lvbatt_current_vs_time = [time , I_lvbatt];
 SOC_vs_time            = [time , SOC];
