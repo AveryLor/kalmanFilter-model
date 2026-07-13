@@ -59,8 +59,8 @@ fprintf('  OCV_initial: %.3f V\n', OCV_initial);
 fprintf('  Initial SOC: %.3f (%.1f%%)\n', SOC0, SOC0*100);
 
 %% EKF Parameters
-Q = 1e-5;        % Process noise covariance (SOC uncertainty)
-R = 0.01;        % Measurement noise covariance (voltage uncertainty)
+Q = 1e-6;        % Process noise covariance (SOC uncertainty)
+R = 4e-4;        % Measurement noise covariance (voltage variance, ~20mV sigma)
 P = 0.01;        % Initial state covariance
 
 % Initial state (SOC estimate)
@@ -122,11 +122,17 @@ for k = 2:N
     residual = V_measured - V_pred;
     
     % Measurement Jacobian: H = dh/dx = dOCV/dSOC
-    % Compute numerically
-    eps = 1e-6;
-    soc_test = max(0, min(1, x_pred + eps));
-    OCV_plus = OCVf(soc_test);
-    H = (OCV_plus - OCV_pred) / eps;  % dOCV/dSOC
+    % Use a central finite difference for a more robust slope estimate.
+    eps_soc = 1e-3;
+    soc_hi = max(0, min(1, x_pred + eps_soc));
+    soc_lo = max(0, min(1, x_pred - eps_soc));
+    if soc_hi == soc_lo
+        H = 0.5;
+    else
+        OCV_hi = OCVf(soc_hi);
+        OCV_lo = OCVf(soc_lo);
+        H = (OCV_hi - OCV_lo) / (soc_hi - soc_lo);
+    end
     
     % Ensure H is positive and reasonable
     if H <= 0 || isnan(H) || isinf(H)
@@ -145,7 +151,7 @@ for k = 2:N
     K = P_pred * H' / S;
     
     % Clamp gain to prevent instability
-    K = max(0, min(2, K));
+    K = max(0, min(5, K));
     
     % Update state estimate
     % Only apply correction if residual is reasonable (not huge voltage mismatch)
@@ -167,8 +173,8 @@ for k = 2:N
             k, V_pred, V_measured, residual, K, x);
     end
     
-    % Update covariance
-    P = (1 - K * H) * P_pred;
+    % Update covariance (Joseph form for numerical stability)
+    P = (1 - K * H) * P_pred * (1 - K * H)' + K * R * K';
     
     % Ensure P stays positive
     P = max(1e-6, P);
@@ -198,10 +204,8 @@ fprintf('SOC Range:    %.3f - %.3f (%.1f%% - %.1f%%)\n', ...
     SOC_min, SOC_max, SOC_min*100, SOC_max*100);
 fprintf('===============================\n\n');
 
-%% Plot 1: SOC vs Time
-figure('Position', [100, 100, 1200, 600]);
-
-subplot(1, 2, 1);
+%% Plot: EKF SOC vs Time
+figure('Position', [100, 100, 800, 500]);
 plot(time/3600, SOC_ekf*100, 'b-', 'LineWidth', 2);
 grid on;
 xlabel('Time (hours)', 'FontSize', 12, 'FontWeight', 'bold');
