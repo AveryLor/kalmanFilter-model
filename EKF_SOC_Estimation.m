@@ -12,11 +12,11 @@ fprintf('Loaded Michigan race data: %d points\n', length(time));
 N = length(time);
 dt_vec = [0; diff(time)];  % Time differences
 
-%% Battery Parameters (from CoulombCounting.m)
-Ns = 4;          % cells in series
-Np = 8;          % parallel strings
-Q_Ah = 3.45;    % cell capacity (Ah)
-R_ohm = 0.038;  % internal resistance (Ω)
+%% Battery Parameters (Michigan HV pack)
+Ns = 144;        % cells in series (593 V pack / ~4.1 V nominal per cell)
+Np = 1;          % parallel strings (pack-level current measurements)
+Q_Ah = 27;       % cell capacity (Ah) - from BatterySOCEstimationData.m
+R_ohm = 0.011;   % internal resistance (Ω) - typical R0 at 293 K
 Q_C = Q_Ah * 3600;  % Capacity in Coulombs
 
 % Convert to cell-level
@@ -43,12 +43,8 @@ if OCV_initial < min(OCV_vec)
     SOC0 = 0;
     fprintf('Warning: OCV (%.3f V) below lookup table range, setting SOC0=0\n', OCV_initial);
 elseif OCV_initial > max(OCV_vec)
-    % If OCV is way too high, it's likely a pack configuration issue
-    % Estimate SOC from voltage assuming it's at high SOC
-    SOC0 = 0.8;  % Start with reasonable estimate
-    fprintf('Warning: OCV (%.3f V) above lookup table range.\n', OCV_initial);
-    fprintf('  V_cell = %.3f V suggests pack configuration mismatch.\n', V_cell(1));
-    fprintf('  Setting initial SOC to 0.8 (80%%) as default.\n');
+    SOC0 = SOC_from_OCV(OCV_initial);
+    fprintf('Warning: OCV (%.3f V) above lookup table range, using extrapolated SOC\n', OCV_initial);
 else
     SOC0 = SOC_from_OCV(OCV_initial);
 end
