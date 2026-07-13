@@ -60,8 +60,12 @@ fprintf('  Initial SOC: %.3f (%.1f%%)\n', SOC0, SOC0*100);
 
 %% EKF Parameters
 Q = 1e-6;        % Process noise covariance (SOC uncertainty)
-R = 4e-4;        % Measurement noise covariance (voltage variance, ~20mV sigma)
+R = 0.7;         % Measurement noise covariance (V^2); large R limits voltage over-correction
 P = 0.01;        % Initial state covariance
+P_max = 0.01;    % Cap state covariance to keep Kalman gain bounded
+residual_max = 0.10;  % Skip voltage update when model mismatch exceeds this (V)
+corr_gain = 10;       % Max voltage correction as multiple of coulomb step this interval
+corr_floor = 1e-5;    % Minimum allowed per-step voltage correction (SOC fraction)
 
 % Initial state (SOC estimate)
 x = SOC0;  % SOC (fraction)
@@ -82,30 +86,16 @@ for k = 2:N
     % Note: Positive current = discharging (decreases SOC)
     %       Negative current = charging (increases SOC) (could be from actual charging or regen)
     
-    % Predict SOC using current integration
-    % Use average current over interval for better accuracy
-    if k > 1
-        I_avg = (I_cell(k-1) + I_cell(k)) / 2;
-    else
-        I_avg = I_cell(k);
-    end
-    
-    % SOC chang
+    % Predict SOC using current integration (trapezoidal current average)
+    I_avg = (I_cell(k-1) + I_cell(k)) / 2;
     delta_SOC = -(I_avg * dt_k) / Q_C;
     x_pred = x + delta_SOC;
-    x_pred = max(0, min(1, x_pred));  % Clamp to valid range
-    
-    % Debug for first few iterations
-    if k <= 5
-        fprintf('  k=%d: I_cell=%.3f A, dt=%.4f s, delta_SOC=%.6f, x=%.4f -> x_pred=%.4f\n', ...
-            k, I_avg, dt_k, delta_SOC, x, x_pred);
-    end
     
     % State transition Jacobian: F = df/dx = 1 (SOC is directly integrated)
     F = 1;
     
     % Predict covariance
-    P_pred = F * P * F' + Q;
+    P_pred = min(P_max, F * P * F' + Q);
     
     % ========== UPDATE STEP ==========
     % Measurement model: V = OCV(SOC) - I*R
@@ -150,34 +140,20 @@ for k = 2:N
     % Kalman gain
     K = P_pred * H' / S;
     
-    % Clamp gain to prevent instability
-    K = max(0, min(5, K));
-    
     % Update state estimate
-    % Only apply correction if residual is reasonable (not huge voltage mismatch)
-    if abs(residual) < 5  % Reasonable voltage residual threshold
-        x = x_pred + K * residual;
+    % Only apply a small voltage correction when model and measurement agree
+    if abs(residual) <= residual_max
+        max_corr = max(corr_floor, corr_gain * abs(delta_SOC));
+        soc_corr = max(-max_corr, min(max_corr, K * residual));
+        x = x_pred + soc_corr;
     else
-        % If residual is huge, likely voltage measurement/model mismatch
-        % Trust the prediction (current integration) more
         x = x_pred;
-        if k <= 10
-            fprintf('  k=%d: Large residual (%.3f V), using prediction only\n', k, residual);
-        end
     end
     x = max(0, min(1, x));  % Clamp to valid range
     
-    % Debug for first few iterations
-    if k <= 5
-        fprintf('  k=%d: V_pred=%.3f, V_meas=%.3f, residual=%.3f, K=%.4f, x=%.4f\n', ...
-            k, V_pred, V_measured, residual, K, x);
-    end
-    
     % Update covariance (Joseph form for numerical stability)
     P = (1 - K * H) * P_pred * (1 - K * H)' + K * R * K';
-    
-    % Ensure P stays positive
-    P = max(1e-6, P);
+    P = min(P_max, max(1e-6, P));
     
     % Store result
     SOC_ekf(k) = x;
