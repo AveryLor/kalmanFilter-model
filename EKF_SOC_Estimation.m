@@ -178,11 +178,6 @@ for k = 2:N
     
     % Store result
     SOC_ekf(k) = x;
-    
-    % Progress indicator
-    if mod(k, 10000) == 0
-        fprintf('  Progress: %d/%d (%.1f%%)\n', k, N, 100*k/N);
-    end
 end
 
 fprintf('EKF estimation completed!\n');
